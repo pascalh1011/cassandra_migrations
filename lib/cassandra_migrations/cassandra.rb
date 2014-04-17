@@ -50,11 +50,13 @@ module CassandraMigrations
     end
 
     def self.execute(cql)
+      start = Time.now.to_f
       connect_to_server unless client
-      Rails.logger.try(:info, "\e[1;35m [Cassandra Migrations] \e[0m #{cql.to_s}")
       result = client.execute(cql)
       QueryResult.new(result) if result
-    end  
+    ensure
+      Rails.logger.try(:info, "\e[1;35m [Cassandra (#{((Time.now.to_f-start)*1000).round(1)}ms)] \e[0m #{cql.to_s}")
+    end
     
   private
     
