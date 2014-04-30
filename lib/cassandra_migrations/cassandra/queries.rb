@@ -21,12 +21,29 @@ module CassandraMigrations
         
         execute(query)
       end
+
+      def selection_to_cql_clause(selection_string_or_hash, table)
+        if selection_string_or_hash.respond_to?(:keys)
+          selection_string_or_hash.collect do |column, value| 
+            if value.is_a?(Array)
+              "#{column} IN (#{value.collect { |i| to_cql_value(column, i, table, {}) }.join(',')})"
+            else
+              "#{column} = #{to_cql_value(column, value, table, {})}"
+            end
+          end.join(' AND ')
+        else
+          selection_string_or_hash
+        end
+      end
       
-      def update!(table, selection, value_hash, options={})
+      def update!(table, selection_string_or_hash, value_hash, options={})
         set_terms = []
+
         value_hash.each do |column, value| 
           set_terms << "#{column} = #{to_cql_value(column, value, table, options)}"
         end
+
+        selection = selection_to_cql_clause(selection_string_or_hash, table)
         
         query = "UPDATE #{table}"
         
@@ -43,7 +60,7 @@ module CassandraMigrations
         query_string = "SELECT #{options[:projection] || '*'} FROM #{table}"
         
         if options[:selection]
-          query_string << " WHERE #{options[:selection]}"
+          query_string << ' WHERE ' + selection_to_cql_clause(options[:selection], table)
         end
         
         if options[:order_by]
@@ -61,8 +78,11 @@ module CassandraMigrations
         execute(query_string)
       end
       
-      def delete!(table, selection, options={})
+      def delete!(table, selection_string_or_hash, options={})
         options[:projection] = options[:projection].to_s + ' ' if options[:projection]
+
+        selection = selection_to_cql_clause(selection_string_or_hash, table)
+
         execute("DELETE #{options[:projection]}FROM #{table} WHERE #{selection}")
       end
       
@@ -115,6 +135,8 @@ module CassandraMigrations
           end
         elsif value.is_a?(Hash)
           "#{operation}{ #{value.reduce([]) {|sum, (key, value)| sum << "'#{key}': '#{value}'" }.join(", ") } }"
+        elsif value.nil?
+          'NULL'
         else
           value.to_s
         end
