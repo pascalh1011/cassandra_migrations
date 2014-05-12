@@ -75,7 +75,7 @@ module CassandraMigrations
           query_string << " ALLOW FILTERING"
         end
     
-        execute(query_string)
+        execute(query_string, consistency: :one)
       end
       
       def delete!(table, selection_string_or_hash, options={})

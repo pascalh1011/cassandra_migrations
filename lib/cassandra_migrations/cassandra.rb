@@ -49,10 +49,10 @@ module CassandraMigrations
       end
     end
 
-    def self.execute(cql)
+    def self.execute(cql, options = {})
       start = Time.now.to_f
       connect_to_server unless client
-      result = client.execute(cql)
+      result = client.execute(cql, options)
       QueryResult.new(result) if result
     ensure
       Rails.logger.try(:info, "\e[1;35m [Cassandra (#{((Time.now.to_f-start)*1000).round(1)}ms)] \e[0m #{cql.to_s}")
