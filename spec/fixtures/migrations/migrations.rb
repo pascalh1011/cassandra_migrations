@@ -16,7 +16,7 @@ class CreateKitchenSink < CassandraMigrations::Migration
       t.list :a_list_of_strings, :type => :string
     end
   end
-  
+
   def down
     drop_table :kitchen_sink
   end
@@ -85,20 +85,20 @@ class BadCollectionsMapMigration < CassandraMigrations::Migration
 end
 
 class MigrationWithSecondaryIndex < CassandraMigrations::Migration
-  def up    
+  def up
     create_index :with_indexes, :a_string
   end
-  
+
   def down
     drop_index :with_indexes, :a_string
   end
 end
 
 class MigrationWithANamedSecondaryIndex < CassandraMigrations::Migration
-  def up    
+  def up
     create_index :with_indexes, :another_string, :name => 'by_another_string'
   end
-  
+
   def down
     drop_index 'by_another_string'
   end
@@ -122,4 +122,107 @@ class CompositePartitionKey < CassandraMigrations::Migration
     end
   end
 end
+
+class BadFloatColumnDeclarationMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists do |t|
+      t.uuid :id, :primary_key => true
+      t.float :a_float, :limit => 3
+    end
+  end
+end
+
+class FloatDefaultColumnDeclarationMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists do |t|
+      t.uuid :id, :primary_key => true
+      t.float :a_float
+    end
+  end
+end
+
+class Float4ColumnDeclarationMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists do |t|
+      t.uuid :id, :primary_key => true
+      t.float :a_float_4, :limit => 4
+    end
+  end
+end
+
+class Float8ColumnDeclarationMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists do |t|
+      t.uuid :id, :primary_key => true
+      t.float :a_float_8, :limit => 8
+    end
+  end
+end
+
+class DecimalColumnDeclarationMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists do |t|
+      t.uuid :id, :primary_key => true
+      t.decimal :a_decimal
+    end
+  end
+end
+
+class WithClusteringOrderMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists, options: {clustering_order: 'a_decimal DESC'} do |t|
+      t.uuid :id, :primary_key => true
+      t.decimal :a_decimal
+    end
+  end
+end
+
+class WithCompactStorageMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists, options: {compact_storage: true} do |t|
+      t.uuid :id, :primary_key => true
+      t.decimal :a_decimal
+    end
+  end
+end
+
+class WithPropertyMigration < CassandraMigrations::Migration
+  def up
+    create_table :collection_lists, options: {gc_grace_seconds: 43200} do |t|
+      t.uuid :id, :primary_key => true
+      t.decimal :a_decimal
+    end
+  end
+end
+
+class WithAlternateKeyspaceMigration < CassandraMigrations::Migration
+  def up
+    using_keyspace('alternative') do
+      create_table :collection_lists, options: {compact_storage: true} do |t|
+        t.uuid :id, :primary_key => true
+        t.decimal :a_decimal
+      end
+    end
+  end
+end
+
+class WithCounterColumnMigration < CassandraMigrations::Migration
+  def up
+    create_table :with_counter do |t|
+      t.uuid :id, :primary_key => true
+      t.counter :counter_value
+    end
+  end
+end
+
+class WrongWithCounterColumnMigration < CassandraMigrations::Migration
+  def up
+    create_table :with_counter do |t|
+      t.uuid :id, :primary_key => true
+      t.string :name
+      t.counter :counter_value
+    end
+  end
+end
+
 
