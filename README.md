@@ -24,27 +24,31 @@ This enables you to use Cassandra in an organized way, combined with your Active
 
 ### Configure Cassandra
 
-The native transport protocol (sometimes called binary protocol, or CQL protocol) is not on by default in Cassandra 1.2, to enable it edit the `CASSANDRA_DIR/conf/cassandra.yaml` file on all nodes in your cluster and set `start_native_transport` to `true`. You need to restart the nodes for this to have effect.
+The native transport protocol (sometimes called binary protocol, or CQL protocol) is not on by default on all version of Cassandra. If it is not you can enable by editing the `CASSANDRA_DIR/conf/cassandra.yaml` file on all nodes in your cluster and set `start_native_transport` to `true`. You need to restart the nodes for this to have effect.
 
 ### Prepare Project
 
-In your rails root directory:
+In your rails root directory run:
 
     prepare_for_cassandra .
+    
+Which create the `config/cassandra.yml`
 
 ### Configuring cassandra access
 
-Open your newly-created `config/cassandra.yml` and configure the database name for each of the environments, just like you would do for your regular database. The other options defaults should be enough for now.
+Open the newly-created `config/cassandra.yml` and configure the database name for each of the environments, just like you would do for your regular database. The other options defaults should be enough for now.
 
 ```ruby
 development:
-  host: '127.0.0.1'
+  hosts: ['127.0.0.1']
   port: 9042
   keyspace: 'my_keyspace_name'
   replication:
     class: 'SimpleStrategy'
     replication_factor: 1
 ```
+
+>> *SUPPORTED CONFIGURATION OPTIONS*: For a list of supported options see the docs for [Cassandra module, connect method](http://datastax.github.io/ruby-driver/api/) in the [DataStax Ruby Driver](https://github.com/datastax/ruby-driver)
 
 ### Create your database
 
@@ -105,7 +109,7 @@ class CreatePosts < CassandraMigrations::Migration
   def up
     create_table :posts, :partition_keys => [:id, :created_month], :primary_keys => [:created_at] do |p|
       p.integer :id
-      p.string :creation_month
+      p.string :created_month
       p.timestamp :created_at
       p.string :title
       p.text :text
@@ -145,7 +149,7 @@ end
 
 The create_table method allow do pass a hash of options for:
 
-* Clustering Order (clustering_order): A string such as 'a_deciman DESC'
+* Clustering Order (clustering_order): A string such as 'a_decimal DESC'
 * Compact Storage (compact_storage): Boolean, true or false
 * Wait before GC (gc_grace_seconds): Default: 864000 [10 days]
 * Others: See [CQL Table Properties](http://www.datastax.com/documentation/cql/3.1/cql/cql_reference/tabProp.html)
@@ -282,7 +286,7 @@ CassandraMigrations::Cassandra.update!(:posts, 'id = 9999',
 CassandraMigrations::Cassandra.delete!(:posts, 'id = 1234')
 
 # deleting a post title
-CassandraMigrations::Cassandra.delete!(:posts, 'id = 1234'
+CassandraMigrations::Cassandra.delete!(:posts, 'id = 1234',
   :projection => 'title'
 )
 
@@ -375,4 +379,5 @@ To add cassandra database creation and migrations steps to your Capistrano recip
 
 # Acknowledgements
 
-This gem is built upon the [cql-rb](https://github.com/iconara/cql-rb) gem, and I thank Theo for doing an awesome job working on this gem for us.
+This gem is built upon the official [Ruby Driver for Apache Cassandra](https://github.com/datastax/ruby-driver) by DataStax.
+Which supersedes the [cql-rb](https://github.com/iconara/cql-rb) gem (thank you Theo for doing an awesome job).
